@@ -1,6 +1,6 @@
 /* Noriki service worker — shell cached, API never cached. */
 
-const CACHE = "noriki-b35c81d6";
+const CACHE = "noriki-b41c55d6";
 const SHELL = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json"];
 
 self.addEventListener("install", (e) => {

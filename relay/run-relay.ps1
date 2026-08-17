@@ -57,5 +57,21 @@ if (-not (Test-Path $config)) {
 $python = (Get-Command python -ErrorAction SilentlyContinue)
 if (-not $python) { Write-Host "python is not on PATH." -ForegroundColor Red; exit 1 }
 
-Write-Host "Noriki relay starting. Ctrl+C to stop." -ForegroundColor Cyan
-& $python.Source (Join-Path $here "noriki_relay.py") --config $config
+Write-Host "Noriki starting. Ctrl+C to stop." -ForegroundColor Cyan
+
+# The ask-bridge runs alongside the relay: the relay carries your messages to
+# the PC, the bridge carries OVERSEER's questions back to your phone.
+$bridge = Start-Process -FilePath $python.Source `
+    -ArgumentList @((Join-Path $here "noriki_ask_bridge.py"), "--config", $config) `
+    -WorkingDirectory $here -PassThru -WindowStyle Hidden
+
+Write-Host "  ask-bridge running (pid $($bridge.Id))" -ForegroundColor Gray
+
+try {
+    & $python.Source (Join-Path $here "noriki_relay.py") --config $config
+} finally {
+    if ($bridge -and -not $bridge.HasExited) {
+        Stop-Process -Id $bridge.Id -Force -ErrorAction SilentlyContinue
+        Write-Host "`n  ask-bridge stopped" -ForegroundColor Gray
+    }
+}

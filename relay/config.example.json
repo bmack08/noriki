@@ -1,5 +1,5 @@
 {
-  "_comment": "Copy to config.json and edit. config.json is gitignored — it holds local paths only, no secrets.",
+  "_comment": "Copy to config.json and edit. config.json is gitignored. It holds local paths and, if you use SMTP, an app password - so it never gets committed.",
 
   "state_repo": "C:\\Users\\Neurasthetic\\Noriki\\.state",
 
@@ -14,5 +14,31 @@
 
   "permission_mode": "acceptEdits",
   "task_timeout": 1800,
-  "poll_seconds": 15
+  "poll_seconds": 15,
+
+  "_ask_bridge": "Everything below is for noriki_ask_bridge.py - the thing that puts OVERSEER's ask_user questions on your phone.",
+
+  "overseer_url": "http://127.0.0.1:7777/api",
+  "ask_poll_seconds": 3,
+
+  "notify": {
+    "_push": "ntfy is free and needs no account. Pick a LONG unguessable topic name - anyone who knows it can read your notifications. Install the ntfy app, subscribe to the same topic.",
+    "ntfy_topic": "",
+    "ntfy_server": "https://ntfy.sh",
+
+    "_email": "Backup channel for when your phone isn't to hand. Leave smtp.host empty and ntfy will forward the email for you - no SMTP setup needed. Fill smtp in only if you'd rather send it yourself.",
+    "email_to": "bmccoy67@gmail.com",
+    "email_after_seconds": 180,
+
+    "smtp": {
+      "host": "",
+      "port": 587,
+      "user": "",
+      "password": "",
+      "from": ""
+    },
+
+    "_click": "Tapping the notification opens this. Set it to your Pages URL.",
+    "app_url": "https://bmack08.github.io/noriki/"
+  }
 }

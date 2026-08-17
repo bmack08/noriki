@@ -8,7 +8,7 @@
    Neither ever writes the other's files, so no merge conflicts.
    ============================================================ */
 
-const BUILD = "b35c81d6";
+const BUILD = "b41c55d6";
 const API = "https://api.github.com";
 const POLL_MS = 15000;
 
@@ -176,6 +176,78 @@ async function pushState() {
   $("statPush").textContent = new Date().toLocaleTimeString();
 }
 
+/* ---------------- questions from OVERSEER ----------------
+   An agent hit a decision it can't make. OVERSEER blocks the session and the
+   ask-bridge drops the question here. These jump the manual lane: a blocked
+   session is the most expensive thing in the system. */
+
+async function pullAsks() {
+  const entries = await listDir("asks");
+  const files = entries.filter((e) => e.type === "file" && e.name.endsWith(".json"));
+  let added = 0;
+
+  for (const e of files) {
+    const qid = e.name.replace(/\.json$/, "");
+    const existing = state.tasks.find((t) => t.questionId === qid);
+
+    let doc;
+    try {
+      const f = await readFile("asks/" + e.name);
+      if (!f) continue;
+      doc = JSON.parse(f.text);
+    } catch (err) { continue; }
+
+    if (doc.state === "answered") {
+      if (existing && existing.lane !== "done") {
+        existing.lane = "done";
+        existing.doneAt = doc.answeredAt || now();
+        added++;
+      }
+      continue;
+    }
+
+    if (existing) {
+      // an unanswered question can change state (waiting -> expired)
+      if (existing.expired !== (doc.state === "expired")) {
+        existing.expired = doc.state === "expired";
+        existing.why = doc.note || existing.why;
+        added++;
+      }
+      continue;
+    }
+
+    state.tasks.unshift({
+      id: uid(),
+      questionId: qid,
+      sessionId: doc.session_id || "",
+      project: doc.project || "overseer",
+      lane: "manual",
+      kind: "ask",
+      title: doc.headline || "A session needs a decision",
+      why: doc.note || "A session is waiting on you.",
+      questions: doc.questions || [],
+      expired: doc.state === "expired",
+      createdAt: doc.askedAt || now()
+    });
+    added++;
+  }
+  return added;
+}
+
+async function sendAnswer(task, answers) {
+  await writeFile("answers/" + task.questionId + ".json", JSON.stringify({
+    question_id: task.questionId,
+    session_id: task.sessionId,
+    answers: answers,
+    answeredAt: now()
+  }, null, 2), null, "noriki: answer " + task.questionId);
+
+  task.lane = "done";
+  task.doneAt = now();
+  render();
+  await pushState();
+}
+
 /* pull any replies the relay has written */
 async function pullOutbox() {
   const entries = await listDir("outbox");
@@ -215,7 +287,8 @@ async function syncNow(silent) {
   try {
     await pullState();
     const n = await pullOutbox();
-    if (n) await pushState();
+    const q = await pullAsks();
+    if (n || q) await pushState();
     $("statPull").textContent = new Date().toLocaleTimeString();
     setSync("ok");
     render();
@@ -267,6 +340,8 @@ function taskCard(t, opts) {
   const running = t.lane === "auto";
   const done = t.lane === "done";
 
+  if (t.kind === "ask" && !done) return askCard(t, name);
+
   return `
     <div class="task ${done ? "done-row" : ""}">
       <div class="task-top">
@@ -283,6 +358,40 @@ function taskCard(t, opts) {
         </div>` : ""}
     </div>`;
 }
+
+/* A blocked session. Answer it and the work moves; ignore it and it doesn't. */
+function askCard(t, name) {
+  const picked = t.picked || {};
+  const qs = t.questions || [];
+  const idx = qs.findIndex((q) => !(keyFor(q) in picked));
+  const q = idx === -1 ? null : qs[idx];
+
+  const body = q
+    ? `<div class="ask-q">${esc(q.question || q.header || "Which way?")}</div>
+       <div class="ask-options">
+         ${(q.options || []).map((o, i) => `
+           <button class="ask-opt" data-ask="${esc(t.id)}" data-qi="${idx}" data-oi="${i}">
+             <span class="ask-opt-label">${esc(o.label)}</span>
+             ${o.description ? `<span class="ask-opt-desc">${esc(o.description)}</span>` : ""}
+           </button>`).join("")}
+       </div>
+       ${qs.length > 1 ? `<div class="ask-progress">${idx + 1} of ${qs.length}</div>` : ""}`
+    : `<div class="ask-q">Sending your answer…</div>`;
+
+  return `
+    <div class="task ask ${t.expired ? "expired" : ""}">
+      <div class="task-top">
+        <span class="task-project">${esc(name)} · blocked</span>
+        <span class="task-age">${esc(ago(t.createdAt))}</span>
+      </div>
+      ${t.expired
+        ? `<div class="ask-stale">Stopped waiting — but still answer. Your reply is delivered and the work picks up.</div>`
+        : `<div class="ask-live">A session is waiting on you right now.</div>`}
+      ${body}
+    </div>`;
+}
+
+function keyFor(q) { return q.header || q.question || "answer"; }
 
 function renderToday() {
   const today = new Date().toDateString();
@@ -431,6 +540,35 @@ function wire() {
     if (!card) return;
     currentProject = card.dataset.project;
     show("chat");
+  });
+
+  // answering a blocked session
+  $("viewToday").addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-ask]");
+    if (!btn) return;
+    const t = state.tasks.find((x) => x.id === btn.dataset.ask);
+    if (!t) return;
+
+    const q = (t.questions || [])[Number(btn.dataset.qi)];
+    const opt = (q.options || [])[Number(btn.dataset.oi)];
+    if (!q || !opt) return;
+
+    t.picked = t.picked || {};
+    t.picked[keyFor(q)] = opt.label;
+    render();
+
+    // only send once every question has an answer
+    const complete = (t.questions || []).every((qq) => keyFor(qq) in t.picked);
+    if (!complete) return;
+
+    setSync("working");
+    try {
+      await sendAnswer(t, t.picked);
+      setSync("ok");
+    } catch (err) {
+      setSync("error");
+      alert("Couldn't send the answer: " + err.message);
+    }
   });
 
   // task buttons

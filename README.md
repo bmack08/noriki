@@ -66,6 +66,47 @@ git clone https://github.com/<you>/noriki-state ..\.state
 .\run-relay.ps1                          # or -Install to start it at logon
 ```
 
+## The ask-bridge — the part that actually unblocks things
+
+OVERSEER already had the right idea. When an agent hits a decision it can't make,
+it calls `ask_user`, which hits `POST /internal/ask`; OVERSEER blocks the session
+and pushes option cards to its GUI. But read that endpoint's own docstring: it
+blocks **"until the user answers or times out"**, capped at **590 seconds**.
+
+So every question asked while you're away from your desk died after ten minutes,
+and the work stalled until you came back. That timeout was your bandwidth
+constraint, written as a number.
+
+`relay/noriki_ask_bridge.py` doesn't change how long it waits. It changes where
+you can answer:
+
+| When | What happens |
+|---|---|
+| immediately | Question lands in your **Yours** lane · push notification |
+| after ~3 min | Still unanswered → email, for when your phone isn't to hand |
+| at 590s | OVERSEER stops waiting — but the question **stays in your queue** |
+| whenever you answer | Inside the window it resumes live; after it, your answer is delivered as a follow-up prompt and the work picks up |
+
+The timeout still does its real job — stopping a session hanging forever. The
+*decision* just stops being perishable.
+
+### Notifications
+
+Both channels are optional and configured under `notify` in `relay/config.json`.
+
+**Push — [ntfy](https://ntfy.sh).** Free, no account. Pick a long unguessable
+topic name (anyone who knows it can read your notifications), put it in
+`ntfy_topic`, install the ntfy app and subscribe to the same topic.
+
+**Email.** Set `email_to`. Leave `smtp.host` empty and ntfy forwards it for you —
+no SMTP setup at all. Fill in `smtp` only if you'd rather send it yourself.
+
+Test both without waiting for a real question:
+
+```powershell
+python noriki_ask_bridge.py --config config.json --test-notify
+```
+
 ## How a message travels
 
 1. You type into a project's chat on your phone.
@@ -99,8 +140,8 @@ The two sides never touch the same files, so there is nothing to merge:
 
 | Writer | Files |
 |---|---|
-| Phone | `state.json`, `inbox/*.json` |
-| Relay | `outbox/*.json`, `relay-status.json` |
+| Phone | `state.json`, `inbox/*.json`, `answers/*.json` |
+| Relay + bridge | `outbox/*.json`, `asks/*.json`, `relay-status.json` |
 
 ## Build
 
