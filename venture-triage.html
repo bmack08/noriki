@@ -1,0 +1,756 @@
+<title>Venture Triage</title>
+<style>
+  :root {
+    --ground:      #E9E8E3;
+    --surface:     #F3F2EE;
+    --surface-alt: #DEDDD7;
+    --ink:         #1A1F24;
+    --ink-soft:    #4E555C;
+    --ink-faint:   #7C838A;
+    --rule:        #CBCAC4;
+    --accent:      #2E6F7E;
+    --accent-soft: #2E6F7E22;
+    --alive:       #3F7C55;
+    --fading:      #A8761F;
+    --dormant:     #8A8078;
+    --dead:        #9A9691;
+
+    --f-display: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-body:    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-data:    ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+
+    --measure: 66ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #15191D;
+      --surface:     #1C2126;
+      --surface-alt: #262C32;
+      --ink:         #E4E6E9;
+      --ink-soft:    #A8B0B7;
+      --ink-faint:   #767E86;
+      --rule:        #2E353B;
+      --accent:      #5FA8B8;
+      --accent-soft: #5FA8B826;
+      --alive:       #6BB585;
+      --fading:      #D2A24C;
+      --dormant:     #8E877F;
+      --dead:        #6A6560;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #15191D;
+    --surface:     #1C2126;
+    --surface-alt: #262C32;
+    --ink:         #E4E6E9;
+    --ink-soft:    #A8B0B7;
+    --ink-faint:   #767E86;
+    --rule:        #2E353B;
+    --accent:      #5FA8B8;
+    --accent-soft: #5FA8B826;
+    --alive:       #6BB585;
+    --fading:      #D2A24C;
+    --dormant:     #8E877F;
+    --dead:        #6A6560;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  header.masthead {
+    padding-top: 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .eyebrow {
+    font-family: var(--f-data);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(38px, 7vw, 62px);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: var(--measure);
+    margin: 0;
+  }
+
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- verdict figures ---------- */
+
+  .verdict {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .fig {
+    background: var(--surface);
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .fig-num {
+    font-family: var(--f-display);
+    font-size: 40px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .fig-num.is-accent { color: var(--accent); }
+  .fig-num.is-warn   { color: var(--fading); }
+
+  .fig-label {
+    font-family: var(--f-data);
+    font-size: 10.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .fig-note { font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+
+  /* ---------- sections ---------- */
+
+  section { display: flex; flex-direction: column; gap: 22px; }
+
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: 27px;
+    letter-spacing: -0.01em;
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--ink);
+    text-wrap: balance;
+  }
+
+  .lede { font-size: 16px; color: var(--ink-soft); max-width: var(--measure); margin: 0; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- cluster bars ---------- */
+
+  .clusters { display: flex; flex-direction: column; gap: 20px; }
+
+  .cluster { display: flex; flex-direction: column; gap: 7px; }
+
+  .cluster-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .cluster-name { font-weight: 600; font-size: 15px; }
+
+  .cluster-count {
+    font-family: var(--f-data);
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .bar { display: flex; gap: 3px; height: 30px; }
+
+  .seg {
+    flex: 1;
+    background: var(--surface-alt);
+    border-radius: 1px;
+    position: relative;
+    min-width: 0;
+  }
+
+  .seg.live    { background: var(--alive); }
+  .seg.warm    { background: var(--fading); opacity: 0.75; }
+  .seg.cold    { background: var(--dormant); opacity: 0.42; }
+  .seg.buried  { background: var(--dead); opacity: 0.22; }
+
+  .cluster-verdict {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .cluster-verdict b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- census rows ---------- */
+
+  .band { display: flex; flex-direction: column; gap: 2px; }
+
+  .band-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 26px;
+    margin-bottom: 8px;
+  }
+
+  .band-head:first-child { margin-top: 0; }
+
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .dot.alive   { background: var(--alive); }
+  .dot.fading  { background: var(--fading); }
+  .dot.dormant { background: var(--dormant); }
+  .dot.dead    { background: var(--dead); }
+
+  .band-title {
+    font-family: var(--f-data);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .band-meta { font-family: var(--f-data); font-size: 11px; color: var(--ink-faint); margin-left: auto; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 92px 74px 96px;
+    gap: 14px;
+    align-items: center;
+    padding: 11px 14px;
+    background: var(--surface);
+    border-left: 3px solid transparent;
+  }
+
+  .row.alive   { border-left-color: var(--alive); }
+  .row.fading  { border-left-color: var(--fading); }
+  .row.dormant { border-left-color: var(--dormant); }
+  .row.dead    { border-left-color: var(--dead); }
+
+  .r-name { font-weight: 600; font-size: 14.5px; min-width: 0; overflow-wrap: anywhere; }
+
+  .r-name .tag {
+    display: inline-block;
+    font-family: var(--f-data);
+    font-size: 9.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    margin-left: 7px;
+    border-radius: 2px;
+    vertical-align: 1px;
+    font-weight: 500;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .r-name .tag.risk { background: #C0552822; color: var(--fading); }
+
+  .r-date, .r-files, .r-git {
+    font-family: var(--f-data);
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .r-files { text-align: right; }
+  .r-git   { color: var(--ink-faint); }
+
+  .r-git.none { color: var(--fading); }
+
+  /* ---------- action list ---------- */
+
+  .actions { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+
+  .action {
+    background: var(--surface);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .action-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+
+  .action-verb {
+    font-family: var(--f-data);
+    font-size: 10.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    flex: none;
+  }
+
+  .action-verb.cut { color: var(--dormant); }
+  .action-verb.now { color: var(--fading); }
+
+  .action-title { font-family: var(--f-display); font-size: 20px; letter-spacing: -0.01em; }
+
+  .action-body { font-size: 14.5px; color: var(--ink-soft); line-height: 1.55; max-width: var(--measure); }
+  .action-body b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- keep list ---------- */
+
+  .keeps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+
+  .keep { background: var(--surface); padding: 20px; display: flex; flex-direction: column; gap: 7px; }
+
+  .keep-role {
+    font-family: var(--f-data);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .keep-name { font-family: var(--f-display); font-size: 22px; letter-spacing: -0.01em; }
+  .keep-why  { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+    font-family: var(--f-data);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 620px) {
+    .row { grid-template-columns: 1fr auto; row-gap: 4px; }
+    .r-name  { grid-column: 1 / -1; }
+    .r-files { text-align: left; }
+    .r-git   { text-align: right; }
+    h2 { font-size: 23px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Disk audit · 16 August 2026</div>
+    <h1>You don't have twenty-one ventures.</h1>
+    <p class="standfirst">
+      I scanned forty project directories across <code>Documents</code> and your user root, reading
+      last-write dates, git history, and source-file counts. Most of what looks like a venture is
+      <strong>sediment</strong> — an abandoned earlier attempt at something you're still building today.
+      Five things are actually alive.
+    </p>
+  </header>
+
+  <div class="verdict">
+    <div class="fig">
+      <div class="fig-num is-accent">5</div>
+      <div class="fig-label">Real ventures</div>
+      <div class="fig-note">Touched in the last three weeks and going somewhere.</div>
+    </div>
+    <div class="fig">
+      <div class="fig-num">7</div>
+      <div class="fig-label">TaleForges</div>
+      <div class="fig-note">Seven generations of one product idea, six of them dead.</div>
+    </div>
+    <div class="fig">
+      <div class="fig-num is-warn">68,649</div>
+      <div class="fig-label">Sediment files</div>
+      <div class="fig-note">Source files in abandoned rewrites of the flagship alone.</div>
+    </div>
+    <div class="fig">
+      <div class="fig-num">1</div>
+      <div class="fig-label">Unbacked-up core</div>
+      <div class="fig-note">OVERSEER has no git remote. One disk failure from gone.</div>
+    </div>
+  </div>
+
+  <section>
+    <h2>The pattern isn't too many ideas. It's the same idea, restarted.</h2>
+    <p class="lede">
+      Each bar is one cluster of directories doing the same job. Filled segments are alive; faded
+      segments are what you left behind to get there. <strong>You are not scattered across twenty
+      businesses — you are looping on four.</strong>
+    </p>
+
+    <div class="clusters">
+
+      <div class="cluster">
+        <div class="cluster-head">
+          <span class="cluster-name">Story / TTRPG engine</span>
+          <span class="cluster-count">7 attempts · 129,474 files</span>
+        </div>
+        <div class="bar" role="img" aria-label="Seven attempts: one alive, six abandoned">
+          <span class="seg live"></span>
+          <span class="seg cold"></span>
+          <span class="seg cold"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+        </div>
+        <div class="cluster-verdict">
+          TaleForge · TaleForge-Platform · Mythforge · Mythforge-tiptap · mythicforge · story-builder · Talesmith.
+          <b>Keep TaleForge. Archive the other six</b> — but read them for salvage first, because 68,649 files
+          contain solved problems you'd otherwise solve an eighth time.
+        </div>
+      </div>
+
+      <div class="cluster">
+        <div class="cluster-head">
+          <span class="cluster-name">Trading &amp; finance</span>
+          <span class="cluster-count">8 attempts · none in git</span>
+        </div>
+        <div class="bar" role="img" aria-label="Eight attempts: one fading, seven dormant or abandoned">
+          <span class="seg warm"></span>
+          <span class="seg cold"></span>
+          <span class="seg cold"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+        </div>
+        <div class="cluster-verdict">
+          Stockify · STOCK ANALYSIS · Arbitrage · Trading App · shareholder_bot · Super M&amp;A finder · Mining · ErgoNode.
+          Newest is ten weeks cold, not one is version-controlled, and none ever shipped.
+          <b>This whole cluster is a hobby wearing a business costume. Cut all eight.</b>
+        </div>
+      </div>
+
+      <div class="cluster">
+        <div class="cluster-head">
+          <span class="cluster-name">Agent infrastructure</span>
+          <span class="cluster-count">8 attempts · 1 alive</span>
+        </div>
+        <div class="bar" role="img" aria-label="Eight attempts: one fading, two dormant, five abandoned">
+          <span class="seg warm"></span>
+          <span class="seg cold"></span>
+          <span class="seg cold"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+        </div>
+        <div class="cluster-verdict">
+          OVERSEER · CLAUDE-OS · pipeline-agents · Agent Swarm · AgentGPT · claudia · deep-web-analyzer · TokenBuilder.
+          <b>OVERSEER won this bracket</b> — 19 commits, real tests, a working daemon. The other seven are
+          the drafts it beat. Archive them.
+        </div>
+      </div>
+
+      <div class="cluster">
+        <div class="cluster-head">
+          <span class="cluster-name">D&amp;D tooling</span>
+          <span class="cluster-count">6 attempts · feeder tech</span>
+        </div>
+        <div class="bar" role="img" aria-label="Six attempts: all dormant or abandoned">
+          <span class="seg cold"></span>
+          <span class="seg cold"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+          <span class="seg buried"></span>
+        </div>
+        <div class="cluster-verdict">
+          DND_The_Initiative · DND-AI-BATTLE-Maps · owlbear-dice · dnd-tool · dnd_note_manager · UE MCP Map Builder.
+          <b>These aren't ventures — they're TaleForge features that escaped.</b> Fold anything useful into
+          TaleForge's backlog and delete the directories.
+        </div>
+      </div>
+
+      <div class="cluster">
+        <div class="cluster-head">
+          <span class="cluster-name">LOOTIX</span>
+          <span class="cluster-count">3 copies · 1 canonical</span>
+        </div>
+        <div class="bar" role="img" aria-label="Three copies: one alive, one fading, one dormant">
+          <span class="seg live"></span>
+          <span class="seg warm"></span>
+          <span class="seg cold"></span>
+        </div>
+        <div class="cluster-verdict">
+          LOOTIX-live (59 commits, has a remote) · LOOTIX (brand assets + real SOPs, trackers, playbooks) · LOOTIX-main (stale).
+          <b>This is a real business — it has pricing models and a drop calendar.</b> Merge the assets into
+          LOOTIX-live and delete LOOTIX-main.
+        </div>
+      </div>
+
+      <div class="cluster">
+        <div class="cluster-head">
+          <span class="cluster-name">Fitness</span>
+          <span class="cluster-count">3 attempts · 1 alive today</span>
+        </div>
+        <div class="bar" role="img" aria-label="Three attempts: one alive, one fading, one abandoned">
+          <span class="seg live"></span>
+          <span class="seg warm"></span>
+          <span class="seg buried"></span>
+        </div>
+        <div class="cluster-verdict">
+          bw-mastery (edited today) · vision-trainer · Overload Fitness App (two files, 2023).
+          <b>bw-mastery is the only health thing you've actually kept touching.</b> That makes it the
+          fitness half of your stated goal — Noriki should feed it, not replace it.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>The full census</h2>
+    <p class="lede">
+      Sorted by how recently you touched it. <strong>Files</strong> excludes <code>node_modules</code>,
+      <code>.venv</code>, and build output. <strong>Git</strong> shows commit count, or the absence of a repo —
+      which is itself the strongest signal that something was never serious.
+    </p>
+
+    <div class="band">
+
+      <div class="band-head">
+        <span class="dot alive"></span>
+        <span class="band-title">Alive — touched this fortnight</span>
+        <span class="band-meta">6</span>
+      </div>
+
+      <div class="row alive">
+        <span class="r-name">TaleForge <span class="tag">Flagship</span></span>
+        <span class="r-date">Aug 15</span><span class="r-files">60,825</span><span class="r-git">2 commits</span>
+      </div>
+      <div class="row alive">
+        <span class="r-name">bw-mastery <span class="tag">Health</span></span>
+        <span class="r-date">Aug 16</span><span class="r-files">43</span><span class="r-git none">no repo</span>
+      </div>
+      <div class="row alive">
+        <span class="r-name">Film Festival <span class="tag">AI film</span></span>
+        <span class="r-date">Aug 14</span><span class="r-files">246</span><span class="r-git none">no repo</span>
+      </div>
+      <div class="row alive">
+        <span class="r-name">vision-trainer</span>
+        <span class="r-date">Aug 7</span><span class="r-files">14</span><span class="r-git none">no repo</span>
+      </div>
+      <div class="row alive">
+        <span class="r-name">Eldoria-Finale</span>
+        <span class="r-date">Aug 2</span><span class="r-files">67</span><span class="r-git none">no repo</span>
+      </div>
+      <div class="row alive">
+        <span class="r-name">Noriki <span class="tag">New</span></span>
+        <span class="r-date">Aug 16</span><span class="r-files">0</span><span class="r-git none">no repo</span>
+      </div>
+
+      <div class="band-head">
+        <span class="dot fading"></span>
+        <span class="band-title">Fading — 3 weeks to 3 months</span>
+        <span class="band-meta">7</span>
+      </div>
+
+      <div class="row fading">
+        <span class="r-name">overseer <span class="tag risk">No remote</span></span>
+        <span class="r-date">Jul 26</span><span class="r-files">199</span><span class="r-git">19 commits</span>
+      </div>
+      <div class="row fading">
+        <span class="r-name">LOOTIX <span class="tag">Business</span></span>
+        <span class="r-date">Jul 25</span><span class="r-files">584</span><span class="r-git none">no repo</span>
+      </div>
+      <div class="row fading">
+        <span class="r-name">LOOTIX-live</span>
+        <span class="r-date">Jul 24</span><span class="r-files">649</span><span class="r-git">59 commits</span>
+      </div>
+      <div class="row fading">
+        <span class="r-name">resume</span>
+        <span class="r-date">Jun 22</span><span class="r-files">7</span><span class="r-git none">no repo</span>
+      </div>
+      <div class="row fading">
+        <span class="r-name">Mythforge-tiptap (backup)</span>
+        <span class="r-date">Jun 11</span><span class="r-files">10,938</span><span class="r-git">14 commits</span>
+      </div>
+      <div class="row fading">
+        <span class="r-name">Stockify</span>
+        <span class="r-date">Jun 7</span><span class="r-files">55</span><span class="r-git none">no repo</span>
+      </div>
+      <div class="row fading">
+        <span class="r-name">TokenBuilder</span>
+        <span class="r-date">May 25</span><span class="r-files">44</span><span class="r-git none">no repo</span>
+      </div>
+
+      <div class="band-head">
+        <span class="dot dormant"></span>
+        <span class="band-title">Dormant — 4 to 7 months</span>
+        <span class="band-meta">11</span>
+      </div>
+
+      <div class="row dormant"><span class="r-name">STOCK ANALYSIS</span><span class="r-date">Apr 1</span><span class="r-files">109</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">Arbitrage</span><span class="r-date">Mar 31</span><span class="r-files">16</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">deep-web-analyzer</span><span class="r-date">Mar 29</span><span class="r-files">25</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">UE MCP MAP BUILDER</span><span class="r-date">Mar 26</span><span class="r-files">2,720</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">CLAUDE-OS</span><span class="r-date">Mar 15</span><span class="r-files">61</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">DND_The_Initiative</span><span class="r-date">Mar 8</span><span class="r-files">108</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">shareholder_bot</span><span class="r-date">Mar 8</span><span class="r-files">3</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">TaleForge-Platform</span><span class="r-date">Mar 1</span><span class="r-files">16,025</span><span class="r-git">3 commits</span></div>
+      <div class="row dormant"><span class="r-name">pipeline-agents</span><span class="r-date">Feb 15</span><span class="r-files">6</span><span class="r-git none">no repo</span></div>
+      <div class="row dormant"><span class="r-name">owlbear-dice</span><span class="r-date">Feb 13</span><span class="r-files">294</span><span class="r-git">176 commits</span></div>
+      <div class="row dormant"><span class="r-name">LOOTIX-main</span><span class="r-date">Jan 9</span><span class="r-files">454</span><span class="r-git none">no repo</span></div>
+
+      <div class="band-head">
+        <span class="dot dead"></span>
+        <span class="band-title">Buried — over a year</span>
+        <span class="band-meta">16</span>
+      </div>
+
+      <div class="row dead"><span class="r-name">Mythforge</span><span class="r-date">Sep 2025</span><span class="r-files">10,192</span><span class="r-git">3 commits</span></div>
+      <div class="row dead"><span class="r-name">story-builder</span><span class="r-date">Sep 2025</span><span class="r-files">9,945</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">Talesmith</span><span class="r-date">Aug 2025</span><span class="r-files">454</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">claudia</span><span class="r-date">Aug 2025</span><span class="r-files">4,193</span><span class="r-git">165 commits</span></div>
+      <div class="row dead"><span class="r-name">DND-AI-BATTLE-Maps</span><span class="r-date">Jun 2025</span><span class="r-files">46</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">Super M&amp;A finder</span><span class="r-date">Jun 2025</span><span class="r-files">40</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">mythicforge</span><span class="r-date">May 2025</span><span class="r-files">21,095</span><span class="r-git">140 commits</span></div>
+      <div class="row dead"><span class="r-name">ErgoNode</span><span class="r-date">Apr 2025</span><span class="r-files">11,753</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">Mining</span><span class="r-date">Apr 2025</span><span class="r-files">32</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">dnd-tool</span><span class="r-date">Feb 2025</span><span class="r-files">19</span><span class="r-git">1 commit</span></div>
+      <div class="row dead"><span class="r-name">dnd_note_manager</span><span class="r-date">Nov 2024</span><span class="r-files">223</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">Trading App</span><span class="r-date">Nov 2024</span><span class="r-files">278</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">Agent Swarm</span><span class="r-date">Oct 2024</span><span class="r-files">5,734</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">AgentGPT</span><span class="r-date">Sep 2024</span><span class="r-files">575</span><span class="r-git">1,494 commits</span></div>
+      <div class="row dead"><span class="r-name">Neuraesthetic youtube</span><span class="r-date">Dec 2023</span><span class="r-files">1</span><span class="r-git none">no repo</span></div>
+      <div class="row dead"><span class="r-name">Overload Fitness App</span><span class="r-date">Dec 2023</span><span class="r-files">2</span><span class="r-git none">no repo</span></div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>What survives</h2>
+    <p class="lede">
+      Four ventures and two tools. <strong>Noriki and OVERSEER are not businesses</strong> — they're the
+      machine that runs the businesses, and they should never appear on a list of things you're
+      "working on."
+    </p>
+
+    <div class="keeps">
+      <div class="keep">
+        <div class="keep-role">Venture · flagship</div>
+        <div class="keep-name">TaleForge</div>
+        <div class="keep-why">The only venture with a remote, a task file, and work logged yesterday. Seven attempts say you won't let this go — so finish it.</div>
+      </div>
+      <div class="keep">
+        <div class="keep-role">Venture · revenue</div>
+        <div class="keep-name">LOOTIX</div>
+        <div class="keep-why">Has SOPs, a pricing model, supplier directory, and a drop calendar. It is the closest thing here to a business that could take money this quarter.</div>
+      </div>
+      <div class="keep">
+        <div class="keep-role">Venture · creative</div>
+        <div class="keep-name">Film Festival</div>
+        <div class="keep-why">The AI film. Active this week, 246 files, and the one with a hard external deadline shape — festivals have dates.</div>
+      </div>
+      <div class="keep">
+        <div class="keep-role">Practice · health</div>
+        <div class="keep-name">bw-mastery</div>
+        <div class="keep-why">Touched today. The fitness half of the goal is already running — it needs consistency tracking, not another app.</div>
+      </div>
+      <div class="keep">
+        <div class="keep-role">Tool · not a venture</div>
+        <div class="keep-name">OVERSEER</div>
+        <div class="keep-why">Governs the agents, the locks, the memory, the budget. Back it up before anything else happens.</div>
+      </div>
+      <div class="keep">
+        <div class="keep-role">Tool · not a venture</div>
+        <div class="keep-name">Noriki</div>
+        <div class="keep-why">The phone surface and relay. Its success metric is the other five moving — never its own feature count.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Do these four things before writing a line of Noriki</h2>
+
+    <div class="actions">
+
+      <div class="action">
+        <div class="action-head">
+          <span class="action-verb now">Today</span>
+          <span class="action-title">Give OVERSEER a remote</span>
+        </div>
+        <div class="action-body">
+          19 commits, a 50 MB database, your gatekeeper, memory engine and cost router — and
+          <b>no <code>origin</code></b>. Every other item on this page is recoverable from a backup or
+          rebuildable. This one isn't. Push it to a private repo before you do anything else.
+        </div>
+      </div>
+
+      <div class="action">
+        <div class="action-head">
+          <span class="action-verb">Then</span>
+          <span class="action-title">Salvage before you delete</span>
+        </div>
+        <div class="action-body">
+          The six dead TaleForges hold 68,649 files of solved problems — editor internals, schema
+          decisions, prompt chains you already debugged. <b>Have an agent read them and write one
+          salvage document</b> into TaleForge. Then archive the directories. Deleting first is how
+          you end up building attempt eight.
+        </div>
+      </div>
+
+      <div class="action">
+        <div class="action-head">
+          <span class="action-verb cut">Cut</span>
+          <span class="action-title">The whole trading cluster</span>
+        </div>
+        <div class="action-body">
+          Eight directories, zero repos, zero shipped, newest ten weeks cold. <b>Trading is the thing
+          you do when you're avoiding TaleForge.</b> Move all eight to an <code>_archive</code> folder
+          in one command. If you miss any of them in ninety days, that's real information.
+        </div>
+      </div>
+
+      <div class="action">
+        <div class="action-head">
+          <span class="action-verb cut">Cut</span>
+          <span class="action-title">Twenty-nine directories, one move</span>
+        </div>
+        <div class="action-body">
+          Everything dormant or buried goes to <code>_archive</code> — not the recycle bin. Nothing is
+          lost, nothing is on the list, and the next time you open your projects folder you see
+          <b>six things instead of forty</b>. That single view change is most of what you asked me for.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    Scanned 40 directories under C:\Users\Neurasthetic\Documents and C:\Users\Neurasthetic ·
+    16 August 2026 · File counts exclude node_modules, .git, .venv, dist, build, __pycache__ ·
+    Commit counts and dates read from local git history · Nothing on this page has been moved,
+    archived, or deleted — this is a report, not an action.
+  </footer>
+
+</div>

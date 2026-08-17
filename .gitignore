@@ -1,0 +1,19 @@
+# local relay config — machine paths, not portable
+relay/config.json
+relay/relay.log
+
+# the private state repo gets cloned in here; it is its own repo
+.state/
+
+# build output that isn't served
+dist/
+
+# test artefacts
+.playwright-mcp/
+noriki-*.png
+
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+Thumbs.db

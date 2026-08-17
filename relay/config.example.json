@@ -1,0 +1,18 @@
+{
+  "_comment": "Copy to config.json and edit. config.json is gitignored — it holds local paths only, no secrets.",
+
+  "state_repo": "C:\\Users\\Neurasthetic\\Noriki\\.state",
+
+  "projects": {
+    "film":      "C:\\Users\\Neurasthetic\\Film Festival",
+    "taleforge": "C:\\Users\\Neurasthetic\\Documents\\TaleForge",
+    "lootix":    "C:\\Users\\Neurasthetic\\Documents\\LOOTIX-live",
+    "ironpath":  "C:\\Users\\Neurasthetic\\bw-mastery",
+    "overseer":  "C:\\Users\\Neurasthetic\\Documents\\overseer",
+    "noriki":    "C:\\Users\\Neurasthetic\\Noriki"
+  },
+
+  "permission_mode": "acceptEdits",
+  "task_timeout": 1800,
+  "poll_seconds": 15
+}

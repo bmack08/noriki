@@ -1,0 +1,580 @@
+<title>Four Ventures, Eighteen Days</title>
+<style>
+  :root {
+    --ground:      #E9E8E3;
+    --surface:     #F3F2EE;
+    --surface-alt: #DEDDD7;
+    --ink:         #1A1F24;
+    --ink-soft:    #4E555C;
+    --ink-faint:   #7C838A;
+    --rule:        #CBCAC4;
+    --accent:      #2E6F7E;
+    --accent-soft: #2E6F7E1E;
+    --urgent:      #A33B22;
+    --urgent-soft: #A33B221A;
+    --alive:       #3F7C55;
+    --fading:      #A8761F;
+    --dormant:     #8A8078;
+
+    --f-display: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-body:    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-data:    ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+    --measure: 66ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #15191D;
+      --surface:     #1C2126;
+      --surface-alt: #262C32;
+      --ink:         #E4E6E9;
+      --ink-soft:    #A8B0B7;
+      --ink-faint:   #767E86;
+      --rule:        #2E353B;
+      --accent:      #5FA8B8;
+      --accent-soft: #5FA8B824;
+      --urgent:      #E07A5F;
+      --urgent-soft: #E07A5F1F;
+      --alive:       #6BB585;
+      --fading:      #D2A24C;
+      --dormant:     #8E877F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #15191D;
+    --surface:     #1C2126;
+    --surface-alt: #262C32;
+    --ink:         #E4E6E9;
+    --ink-soft:    #A8B0B7;
+    --ink-faint:   #767E86;
+    --rule:        #2E353B;
+    --accent:      #5FA8B8;
+    --accent-soft: #5FA8B824;
+    --urgent:      #E07A5F;
+    --urgent-soft: #E07A5F1F;
+    --alive:       #6BB585;
+    --fading:      #D2A24C;
+    --dormant:     #8E877F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 52px; }
+
+  .eyebrow {
+    font-family: var(--f-data);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* ---------- countdown hero ---------- */
+
+  header.hero {
+    padding-top: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: clamp(36px, 6.6vw, 58px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .hero-body { font-size: 18px; line-height: 1.55; color: var(--ink-soft); max-width: var(--measure); margin: 0; }
+  .hero-body strong { color: var(--ink); font-weight: 600; }
+
+  .clock {
+    border: 1px solid var(--urgent);
+    background: var(--urgent-soft);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    flex-wrap: wrap;
+  }
+
+  .clock-num {
+    font-family: var(--f-display);
+    font-size: 76px;
+    line-height: 0.9;
+    color: var(--urgent);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+  }
+
+  .clock-text { display: flex; flex-direction: column; gap: 3px; min-width: 200px; flex: 1; }
+  .clock-label { font-family: var(--f-data); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--urgent); }
+  .clock-note { font-size: 14.5px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* the 18-day strip */
+  .strip { display: flex; gap: 2px; margin-top: 14px; }
+  .strip span { flex: 1; height: 22px; background: var(--surface-alt); border-radius: 1px; }
+  .strip span.gone { background: var(--urgent); opacity: 0.28; }
+  .strip span.left { background: var(--urgent); opacity: 0.85; }
+
+  .strip-key {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--f-data);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- dossiers ---------- */
+
+  section { display: flex; flex-direction: column; gap: 20px; }
+
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 500;
+    font-size: 27px;
+    letter-spacing: -0.01em;
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--ink);
+    text-wrap: balance;
+  }
+
+  .dossier {
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .d-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .d-name { font-family: var(--f-display); font-size: 30px; letter-spacing: -0.015em; line-height: 1.1; }
+  .d-kind { font-family: var(--f-data); font-size: 10.5px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-faint); }
+
+  .d-status {
+    margin-left: auto;
+    font-family: var(--f-data);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .d-status.hot   { background: var(--urgent-soft); color: var(--urgent); }
+  .d-status.warm  { background: var(--accent-soft); color: var(--accent); }
+  .d-status.idle  { background: var(--surface-alt); color: var(--ink-soft); }
+
+  .d-body { padding: 22px 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  .d-block { display: flex; flex-direction: column; gap: 7px; }
+
+  .d-label {
+    font-family: var(--f-data);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .d-text { font-size: 14.8px; line-height: 1.6; color: var(--ink-soft); max-width: var(--measure); }
+  .d-text b { color: var(--ink); font-weight: 600; }
+  .d-text code { font-family: var(--f-data); font-size: 0.88em; background: var(--surface-alt); padding: 1px 5px; border-radius: 2px; }
+
+  ul.d-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+  ul.d-list li { font-size: 14.5px; color: var(--ink-soft); line-height: 1.55; }
+  ul.d-list li b { color: var(--ink); font-weight: 600; }
+
+  .d-next {
+    background: var(--surface-alt);
+    padding: 18px 24px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .d-next-label { font-family: var(--f-data); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  .d-next-text { font-size: 16px; line-height: 1.5; font-weight: 600; }
+  .d-next-why { font-size: 14px; color: var(--ink-soft); line-height: 1.5; max-width: var(--measure); font-weight: 400; }
+
+  /* evidence strip inside dossier */
+  .evidence { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .ev { background: var(--surface); padding: 13px 14px; display: flex; flex-direction: column; gap: 3px; }
+  .ev-num { font-family: var(--f-data); font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .ev-num.zero { color: var(--urgent); }
+  .ev-num.good { color: var(--alive); }
+  .ev-label { font-family: var(--f-data); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); line-height: 1.3; }
+
+  /* ---------- callout ---------- */
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .callout-title { font-family: var(--f-display); font-size: 22px; letter-spacing: -0.01em; }
+  .callout-text { font-size: 15px; line-height: 1.6; color: var(--ink-soft); max-width: var(--measure); }
+  .callout-text b { color: var(--ink); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+    font-family: var(--f-data);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 620px) {
+    .clock-num { font-size: 58px; }
+    .d-name { font-size: 24px; }
+    h2 { font-size: 23px; }
+    .d-head, .d-body, .d-next { padding-left: 18px; padding-right: 18px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Situation report · 16 August 2026</div>
+    <h1>One of these four has a deadline that cannot move.</h1>
+    <p class="hero-body">
+      I read the four surviving ventures instead of asking you about them — task files, git history,
+      production folders, and the state files the apps actually write. Three of them are waiting on
+      a decision. <strong>One is waiting on a calendar, and the calendar is winning.</strong>
+    </p>
+
+    <div class="clock">
+      <div class="clock-num">18</div>
+      <div class="clock-text">
+        <div class="clock-label">Days to the Higgsfield festival deadline</div>
+        <div class="clock-note">
+          Submission closes <b>3 September 2026</b>. Target runtime is 3:30–4:00.
+          <code>03_SCRIPT/</code> is an empty directory, and the project hasn't been touched since 11 August.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="strip" role="img" aria-label="Eight days elapsed since the last work on the film, eighteen days remaining">
+        <span class="gone"></span><span class="gone"></span><span class="gone"></span><span class="gone"></span>
+        <span class="gone"></span><span class="left"></span><span class="left"></span><span class="left"></span>
+        <span class="left"></span><span class="left"></span><span class="left"></span><span class="left"></span>
+        <span class="left"></span><span class="left"></span><span class="left"></span><span class="left"></span>
+        <span class="left"></span><span class="left"></span><span class="left"></span><span class="left"></span>
+        <span class="left"></span><span class="left"></span><span class="left"></span>
+      </div>
+      <div class="strip-key">
+        <span>Aug 11 — last touched</span>
+        <span>Sep 3 — submission closes</span>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Film Festival</h2>
+
+    <div class="dossier">
+      <div class="d-head">
+        <span class="d-name">Higgsfield Global Film Festival</span>
+        <span class="d-kind">Venture · highest upside</span>
+        <span class="d-status hot">18 days · no script</span>
+      </div>
+
+      <div class="d-body">
+        <div class="evidence">
+          <div class="ev"><span class="ev-num good">58,700</span><span class="ev-label">Prompts scraped</span></div>
+          <div class="ev"><span class="ev-num good">4</span><span class="ev-label">Voice takes cut</span></div>
+          <div class="ev"><span class="ev-num zero">0</span><span class="ev-label">Script files</span></div>
+          <div class="ev"><span class="ev-num zero">1</span><span class="ev-label">Concept file</span></div>
+          <div class="ev"><span class="ev-num">5</span><span class="ev-label">Days cold</span></div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">What's genuinely done</div>
+          <ul class="d-list">
+            <li>Strategy is <b>complete and unusually good</b> — contest brief, a 10-point judge scorecard, a locked north-star creative rule, and a compliance doc.</li>
+            <li>Research is <b>overwhelming</b>: ~58,700 prompts crawled from four published Higgsfield projects, with four distinct methodologies decoded into a prompt template.</li>
+            <li>Production scaffolding exists — <code>PRODUCTION_BIBLE.md</code>, <code>STYLE_BLOCK.md</code>, <code>PROJECT_BRIEF.md</code>, <code>AI_DIRECTOR_QUESTIONS.md</code>.</li>
+            <li>Four character voice takes rendered (Sterling, Callum, Bram, Barrett) plus six test frames and a source clip.</li>
+          </ul>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">What's missing</div>
+          <div class="d-text">
+            <b>The film.</b> <code>02_CONCEPTS/</code> holds a single <code>DECISION.md</code>.
+            <code>03_SCRIPT/</code> is empty — not sparse, empty. You have done a magnificent amount of
+            preparation and have not yet written the story.
+          </div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">The arithmetic</div>
+          <div class="d-text">
+            A 3:30–4:00 runtime at roughly 5 seconds a shot is <b>45–50 locked shots</b>. With generation
+            retries, that's comfortably 100+ jobs, plus assembly, sound, and grade. Across 18 days that is
+            about <b>three shots locked and generated every single day</b>, starting today, with no gap days.
+            It is achievable. It stops being achievable somewhere around day five of not starting.
+          </div>
+        </div>
+      </div>
+
+      <div class="d-next">
+        <div class="d-next-label">Next action</div>
+        <div class="d-next-text">Lock the script this week — beat sheet, then shot list.</div>
+        <div class="d-next-why">
+          Nothing else on this page competes with this. Every other deadline here is one you set yourself
+          and can therefore move; this one belongs to somebody else.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The other three</h2>
+
+    <div class="dossier">
+      <div class="d-head">
+        <span class="d-name">TaleForge</span>
+        <span class="d-kind">Venture · flagship</span>
+        <span class="d-status warm">Built, unverified</span>
+      </div>
+
+      <div class="d-body">
+        <div class="evidence">
+          <div class="ev"><span class="ev-num good">135</span><span class="ev-label">Tests passing</span></div>
+          <div class="ev"><span class="ev-num good">3</span><span class="ev-label">Phase-1 sprints shipped</span></div>
+          <div class="ev"><span class="ev-num zero">19</span><span class="ev-label">Days past launch target</span></div>
+          <div class="ev"><span class="ev-num zero">2</span><span class="ev-label">Git commits total</span></div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">Where it actually stands</div>
+          <div class="d-text">
+            Phase 1 (Foundation) is <b>officially complete</b> — auth enforcement, ownership, Google OAuth,
+            httpOnly cookies with CSRF, refresh-token revocation, the full v5 UI migration, SessionManager
+            retired. That is not a hobby codebase; that is a product.
+          </div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">The actual blocker — and it isn't code</div>
+          <div class="d-text">
+            Tier 12 is your own manual-test report from <b>28 July</b>, where you wrote
+            "launch-ready in 1–2 weeks." That was nineteen days ago. Reading the tier now, item after item
+            reads <b>"WRITTEN, compile-smoked. Verify = BATCH_TEST_CHECKLIST."</b> Shops sync, whisper,
+            the dice totals, initiative on fast-add, the combat redesign, DM visibility gating — <b>the
+            work is done and sitting unblessed</b>, because verification requires you in a browser.
+            <br><br>
+            This is your bandwidth constraint in its purest form: agents can write TaleForge but they
+            cannot sign it off. <b>It is not behind because it needs more building.</b>
+          </div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">Worth knowing</div>
+          <div class="d-text">
+            The whole repo is <b>two commits deep</b> — initial commit was 15 August. There's a remote,
+            so it's backed up, but there's effectively no history to bisect if something breaks.
+          </div>
+        </div>
+      </div>
+
+      <div class="d-next">
+        <div class="d-next-label">Next action</div>
+        <div class="d-next-text">One verification pass against BATCH_TEST_CHECKLIST. Build nothing new.</div>
+        <div class="d-next-why">
+          Every hour spent adding features here widens the unverified pile. Closing it is the only thing
+          that converts three months of shipped work into a beta.
+        </div>
+      </div>
+    </div>
+
+    <div class="dossier">
+      <div class="d-head">
+        <span class="d-name">LOOTIX</span>
+        <span class="d-kind">Venture · nearest to revenue</span>
+        <span class="d-status idle">4 weeks idle</span>
+      </div>
+
+      <div class="d-body">
+        <div class="evidence">
+          <div class="ev"><span class="ev-num good">8</span><span class="ev-label">Pages live</span></div>
+          <div class="ev"><span class="ev-num good">Yes</span><span class="ev-label">Stripe wired</span></div>
+          <div class="ev"><span class="ev-num">59</span><span class="ev-label">Commits</span></div>
+          <div class="ev"><span class="ev-num zero">29</span><span class="ev-label">Days since last commit</span></div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">Where it actually stands</div>
+          <div class="d-text">
+            Next.js + Supabase, deployed on Vercel, full "Forged" design system, eight pages
+            (Home, Shop, Giveaways, Winners, About, FAQ, How It Works, Official Rules).
+            The last commit on <b>18 July</b> shipped <b>Stripe checkout with cart and automatic entry
+            granting via webhook</b>.
+          </div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">The thing that matters</div>
+          <div class="d-text">
+            <b>This can take money right now.</b> Alongside it you have real operating documents most
+            first-time founders never write — pricing and margins calculator, drop calendar, supplier
+            and vendor directory, SOPs, a customer-service playbook, expense and revenue trackers.
+            <br><br>
+            So LOOTIX is not blocked on engineering. A drops brand with no drop date is a website.
+            <b>The open question is a date, not a feature.</b>
+          </div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">Where I'm guessing</div>
+          <div class="d-text">
+            This is the one venture I could not fully read — the business substance lives in
+            <code>.docx</code> and <code>.xlsx</code> files, and inventory, supplier commitments, and
+            cash position aren't in any file I can see. <b>This is the one that genuinely needs you to
+            talk to me.</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-next">
+        <div class="d-next-label">Next action</div>
+        <div class="d-next-text">Name a date for Drop 1, or consciously park LOOTIX until the film ships.</div>
+        <div class="d-next-why">
+          Both are fine answers. Leaving it in its current state — finished, paid for, idle — is the
+          only bad one.
+        </div>
+      </div>
+    </div>
+
+    <div class="dossier">
+      <div class="d-head">
+        <span class="d-name">IRONPATH</span>
+        <span class="d-kind">Practice · health</span>
+        <span class="d-status hot">0 sessions logged</span>
+      </div>
+
+      <div class="d-body">
+        <div class="evidence">
+          <div class="ev"><span class="ev-num good">6</span><span class="ev-label">Versions in 2 days</span></div>
+          <div class="ev"><span class="ev-num good">10</span><span class="ev-label">Movement chains</span></div>
+          <div class="ev"><span class="ev-num good">Live</span><span class="ev-label">Deployed PWA</span></div>
+          <div class="ev"><span class="ev-num zero">0</span><span class="ev-label">Workouts recorded</span></div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">What you built</div>
+          <div class="d-text">
+            A genuinely accomplished offline PWA at <code>github.com/bmack08/ironpath</code>, shipped
+            v1 through v6 across <b>14–15 August</b>: service worker, persistent storage, wake lock,
+            haptics, view transitions, focus-mode trainer, equipment substitutions, auto-deload,
+            backup and restore, and opt-in background training reminders at 48 and 68 hours.
+          </div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">What <code>progress.json</code> says</div>
+          <div class="d-text">
+            <code>sessionCount: 0</code>. All ten chains at level 0. The active session's log is an
+            array of nulls. <b>Six versions in two days, and not one workout.</b>
+          </div>
+        </div>
+
+        <div class="d-block">
+          <div class="d-label">Why I'm putting this in a business report</div>
+          <div class="d-text">
+            Because it is the whole problem in miniature, and it is not a criticism — it's the most
+            useful data point in this entire audit. <b>Building the tracker is the reward. Using it is
+            the work.</b> You asked me to build you an app to fix your follow-through, two days after
+            building an app to fix your follow-through that you have not opened since.
+            <br><br>
+            That doesn't mean don't build Noriki. It means <b>Noriki's success can never be measured in
+            versions shipped</b> — only in whether the other four move. If Noriki reaches v6 this week,
+            something has gone wrong.
+          </div>
+        </div>
+      </div>
+
+      <div class="d-next">
+        <div class="d-next-label">Next action</div>
+        <div class="d-next-text">Do one session. Today. Don't touch the code.</div>
+        <div class="d-next-why">
+          <code>sessionCount: 1</code> is worth more than v7. It also makes IRONPATH the first honest
+          test of whether any of this works.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What this changes about Noriki</h2>
+
+    <div class="callout">
+      <div class="callout-title">Build it small, this week, pointed at the film.</div>
+      <div class="callout-text">
+        You asked whether to interview before or after building. The interview is done — this page is it —
+        and it produced one fact that outranks the app: <b>18 days.</b>
+        <br><br>
+        If we spend those 18 days building Noriki properly, the film misses its deadline and Noriki becomes
+        the thing that killed it. So the plan inverts: <b>a deliberately tiny Noriki, running by the weekend,
+        whose only job for 18 days is to say "lock scene 4" every morning and ask you at night whether you did.</b>
+        The relay, the venture boards, the agent routing — all of it is real, and all of it waits until
+        after 3 September.
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">You already built Noriki's foundation. It's called IRONPATH.</div>
+      <div class="callout-text">
+        Single-file HTML build via <code>build_single.py</code>, a <code>deploy/</code> folder pushed to a
+        GitHub repo, service worker, offline storage, background-sync nudges. <b>That is precisely the
+        architecture I proposed to you yesterday, and you shipped it last Friday.</b>
+        <br><br>
+        So Noriki isn't a new stack — it's IRONPATH's sibling, with a different state file and a relay
+        added later. That removes most of the build risk, and it means the app will already feel familiar
+        on your phone.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Sources read: TaleForge <code>TASKS.md</code> (413 lines, Tiers 1–12) + docs tree + git log ·
+    Film Festival <code>README.md</code> + all six production folders ·
+    LOOTIX-live git history + repo tree · bw-mastery <code>progress.json</code> + deploy git log ·
+    16 August 2026 · No files were modified, moved, or deleted in producing this report.
+  </footer>
+
+</div>

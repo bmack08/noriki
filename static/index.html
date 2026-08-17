@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1216">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Noriki">
+<title>Noriki</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app" hidden>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <button id="navBack" class="icon-btn" hidden aria-label="Back">←</button>
+    <div class="topbar-title">
+      <span id="topTitle">Today</span>
+      <span id="topSub" class="topbar-sub"></span>
+    </div>
+    <div id="syncDot" class="sync-dot" title="Sync status" aria-live="polite"></div>
+    <button id="navSettings" class="icon-btn" aria-label="Settings">⚙</button>
+  </header>
+
+  <!-- ============ TODAY ============ -->
+  <main id="viewToday" class="view">
+
+    <section class="lane lane-manual">
+      <div class="lane-head">
+        <span class="lane-dot manual"></span>
+        <h2>Yours</h2>
+        <span class="lane-count" id="manualCount">0</span>
+      </div>
+      <p class="lane-hint">Only you can clear these.</p>
+      <div id="manualList" class="task-list"></div>
+      <div id="manualEmpty" class="empty" hidden>Nothing needs you right now.</div>
+    </section>
+
+    <section class="lane lane-auto">
+      <div class="lane-head">
+        <span class="lane-dot auto"></span>
+        <h2>Running</h2>
+        <span class="lane-count" id="autoCount">0</span>
+      </div>
+      <p class="lane-hint">Working without you. Nothing to do here.</p>
+      <div id="autoList" class="task-list"></div>
+      <div id="autoEmpty" class="empty" hidden>Nothing queued for the machine.</div>
+    </section>
+
+    <section class="lane">
+      <div class="lane-head">
+        <span class="lane-dot done"></span>
+        <h2>Cleared today</h2>
+        <span class="lane-count" id="doneCount">0</span>
+      </div>
+      <div id="doneList" class="task-list compact"></div>
+      <div id="doneEmpty" class="empty" hidden>Nothing yet today.</div>
+    </section>
+
+    <section class="checkin" id="checkinCard" hidden>
+      <div class="checkin-q" id="checkinQ"></div>
+      <div class="checkin-actions">
+        <button class="btn yes"    data-answer="yes">Yes</button>
+        <button class="btn partly" data-answer="partly">Partly</button>
+        <button class="btn no"     data-answer="no">No</button>
+      </div>
+      <div class="checkin-note">Either answer is logged. Nothing breaks.</div>
+    </section>
+
+  </main>
+
+  <!-- ============ PROJECTS ============ -->
+  <main id="viewProjects" class="view" hidden>
+    <div id="projectGrid" class="project-grid"></div>
+  </main>
+
+  <!-- ============ CHAT (per project) ============ -->
+  <main id="viewChat" class="view chat-view" hidden>
+    <div id="chatLog" class="chat-log"></div>
+    <div class="composer">
+      <textarea id="chatInput" rows="1" placeholder="Ask, or send a task…"
+                autocapitalize="sentences" autocomplete="off"></textarea>
+      <button id="chatSend" class="send-btn" aria-label="Send">↑</button>
+    </div>
+  </main>
+
+  <!-- ============ CAPTURE ============ -->
+  <main id="viewCapture" class="view" hidden>
+    <textarea id="captureInput" class="capture-box" rows="6"
+              placeholder="What's on your mind? Goes to the pile, not the queue."></textarea>
+    <button id="captureSave" class="btn wide">Capture</button>
+    <div id="captureList" class="capture-list"></div>
+  </main>
+
+  <!-- ============ SETTINGS ============ -->
+  <main id="viewSettings" class="view" hidden>
+    <div class="field">
+      <label for="setRepo">State repo <span class="hint">owner/name — private</span></label>
+      <input id="setRepo" type="text" placeholder="bmack08/noriki-state" autocapitalize="off"
+             autocorrect="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="setToken">GitHub token <span class="hint">fine-grained, this repo only, contents read+write</span></label>
+      <input id="setToken" type="password" placeholder="github_pat_…" autocapitalize="off"
+             autocorrect="off" spellcheck="false">
+    </div>
+    <button id="setSave" class="btn wide">Save &amp; connect</button>
+    <div id="setStatus" class="set-status"></div>
+
+    <div class="settings-block">
+      <h3>Sync</h3>
+      <div class="kv"><span>Last pull</span><span id="statPull" class="mono">—</span></div>
+      <div class="kv"><span>Last push</span><span id="statPush" class="mono">—</span></div>
+      <div class="kv"><span>Pending out</span><span id="statPending" class="mono">0</span></div>
+      <button id="syncNow" class="btn ghost wide">Sync now</button>
+    </div>
+
+    <div class="settings-block">
+      <h3>Danger</h3>
+      <button id="wipeLocal" class="btn danger wide">Forget token on this device</button>
+    </div>
+
+    <div class="build-tag">Noriki <span id="buildVer" class="mono"></span></div>
+  </main>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <nav class="tabbar">
+    <button class="tab active" data-view="today">
+      <span class="tab-glyph">◎</span><span class="tab-label">Today</span>
+    </button>
+    <button class="tab" data-view="projects">
+      <span class="tab-glyph">▤</span><span class="tab-label">Projects</span>
+    </button>
+    <button class="tab" data-view="capture">
+      <span class="tab-glyph">✎</span><span class="tab-label">Capture</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ============ FIRST RUN ============ -->
+<div id="onboard" class="onboard">
+  <div class="onboard-inner">
+    <h1>Noriki</h1>
+    <p>Point this at your private state repo. Everything syncs through git — no server, nothing to keep running.</p>
+    <div class="field">
+      <label for="obRepo">State repo</label>
+      <input id="obRepo" type="text" placeholder="bmack08/noriki-state" autocapitalize="off"
+             autocorrect="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="obToken">Fine-grained token</label>
+      <input id="obToken" type="password" placeholder="github_pat_…" autocapitalize="off"
+             autocorrect="off" spellcheck="false">
+      <div class="hint">Scope it to this one repo, contents read+write, with an expiry. It stays on this device.</div>
+    </div>
+    <button id="obGo" class="btn wide">Connect</button>
+    <div id="obStatus" class="set-status"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+    // A new build takes over immediately; reload once so you actually see it.
+    var reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (reloading) return;
+      reloading = true;
+      location.reload();
+    });
+  }
+</script>
+</body>
+</html>
