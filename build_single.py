@@ -1,7 +1,8 @@
-"""Build deploy/ — the Noriki PWA, ready to serve from GitHub Pages.
+"""Build docs/ — the Noriki PWA, ready to serve from GitHub Pages.
 
 Mirrors the IRONPATH pattern: sources live in static/, this copies and
-inlines them into deploy/, which is what Pages actually serves.
+inlines them into docs/, which is what Pages actually serves. It must be
+docs/ specifically: branch-based Pages offers only the repo root or /docs.
 
     python build_single.py
 
@@ -17,7 +18,9 @@ import shutil
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATIC = os.path.join(HERE, "static")
-DEPLOY = os.path.join(HERE, "deploy")
+# GitHub Pages only serves the repo root or /docs from a branch — never an
+# arbitrary folder — so the built app lives in docs/.
+DOCS = os.path.join(HERE, "docs")
 DIST = os.path.join(HERE, "dist")
 
 # Files whose content decides the build id. If any of them changes, the
@@ -46,34 +49,34 @@ def png_uri(name):
         return "data:image/png;base64," + base64.b64encode(f.read()).decode()
 
 
-def build_deploy(bid):
-    """Copy static/ to deploy/, stamping the build id into the cache name."""
-    os.makedirs(DEPLOY, exist_ok=True)
+def build_DOCS(bid):
+    """Copy static/ to DOCS/, stamping the build id into the cache name."""
+    os.makedirs(DOCS, exist_ok=True)
     for name in os.listdir(STATIC):
         src = os.path.join(STATIC, name)
         if os.path.isfile(src):
-            shutil.copy2(src, os.path.join(DEPLOY, name))
+            shutil.copy2(src, os.path.join(DOCS, name))
 
     # Stamp the build id so a push actually reaches installed phones.
     sw = read("sw.js").replace('const CACHE = "noriki-v1";',
                                f'const CACHE = "noriki-{bid}";')
-    with open(os.path.join(DEPLOY, "sw.js"), "w", encoding="utf-8") as f:
+    with open(os.path.join(DOCS, "sw.js"), "w", encoding="utf-8") as f:
         f.write(sw)
 
     app = read("app.js").replace('const BUILD = "v1";', f'const BUILD = "{bid}";')
-    with open(os.path.join(DEPLOY, "app.js"), "w", encoding="utf-8") as f:
+    with open(os.path.join(DOCS, "app.js"), "w", encoding="utf-8") as f:
         f.write(app)
 
     # GitHub Pages runs everything through Jekyll unless told not to
-    with open(os.path.join(DEPLOY, ".nojekyll"), "w", encoding="utf-8"):
+    with open(os.path.join(DOCS, ".nojekyll"), "w", encoding="utf-8"):
         pass
 
     total = sum(
-        os.path.getsize(os.path.join(DEPLOY, f))
-        for f in os.listdir(DEPLOY)
-        if os.path.isfile(os.path.join(DEPLOY, f))
+        os.path.getsize(os.path.join(DOCS, f))
+        for f in os.listdir(DOCS)
+        if os.path.isfile(os.path.join(DOCS, f))
     )
-    print(f"built {DEPLOY} ({total / 1024:.0f} KB) build={bid}")
+    print(f"built {DOCS} ({total / 1024:.0f} KB) build={bid}")
 
 
 def build_single(bid):
@@ -103,5 +106,5 @@ def build_single(bid):
 
 if __name__ == "__main__":
     _bid = build_id()
-    build_deploy(_bid)
+    build_DOCS(_bid)
     build_single(_bid)

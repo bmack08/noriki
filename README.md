@@ -29,9 +29,9 @@ as its frozen decision requires.
 | Path | What it is |
 |---|---|
 | `static/` | PWA source — edit here |
-| `deploy/` | Built output; this is what GitHub Pages serves |
+| `docs/` | Built output; this is what GitHub Pages serves. Never hand-edit. |
 | `relay/` | The phone-to-PC bridge |
-| `build_single.py` | `static/` → `deploy/` + a one-file `dist/Noriki.html` |
+| `build_single.py` | `static/` → `docs/` + a one-file `dist/Noriki.html` |
 
 ## Setup
 
@@ -40,7 +40,11 @@ as its frozen decision requires.
 - **`noriki`** (public) — this repo. Holds code only, no data. Public so Pages is free.
 - **`noriki-state`** (**private**) — holds `state.json`, `inbox/`, `outbox/`. Never public.
 
-In `noriki` → Settings → Pages → deploy from `main` branch, `/deploy` folder.
+In `noriki` → Settings → Pages → **Deploy from a branch** → `main` → **`/docs`**.
+
+The folder must be `docs/`. Branch-based Pages only ever offers the repo root
+or `/docs` — an arbitrary folder like `/deploy` is not selectable, which is why
+the build output lives where it does.
 
 ### 2. A token for the phone
 

@@ -167,7 +167,8 @@ Done. Three things left that need your account:
 
   1. Pages
      https://github.com/$Owner/noriki/settings/pages
-     Source: Deploy from a branch -> main -> /deploy -> Save
+     Source: Deploy from a branch -> main -> /docs -> Save
+     (only root and /docs are offered; that is why the build lives in docs/)
      Your app lands at https://$Owner.github.io/noriki/
 
   2. A token for the phone
