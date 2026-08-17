@@ -24,26 +24,46 @@ param(
     [string]$Owner = "bmack08"
 )
 
-$ErrorActionPreference = "Stop"
+# Deliberately NOT "Stop": every git call below is a native command, and in
+# PowerShell 5.1 a native command writing to stderr raises a NativeCommandError
+# that a Stop preference turns terminating — even on success. Exit codes are
+# checked explicitly instead.
+$ErrorActionPreference = "Continue"
+
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $overseer = "C:\Users\Neurasthetic\Documents\overseer"
 
 function Test-Repo($name) {
-    & git ls-remote --heads "https://github.com/$Owner/$name.git" 2>&1 | Out-Null
+    $null = & git ls-remote --heads "https://github.com/$Owner/$name.git" 2>&1
     return ($LASTEXITCODE -eq 0)
 }
 
 function Add-Remote($path, $name) {
     $url = "https://github.com/$Owner/$name.git"
-    $existing = & git -C $path remote get-url origin 2>$null
-    if ($existing) {
-        if ($existing -ne $url) {
-            Write-Host "  origin was $existing — leaving it alone." -ForegroundColor Yellow
+
+    # list remotes rather than asking for one that may not exist — `git remote
+    # get-url` on a missing remote writes to stderr, which is the trap above
+    $remotes = @(& git -C $path remote)
+    if ($remotes -contains "origin") {
+        $existing = (& git -C $path remote get-url origin | Select-Object -First 1)
+        if ($existing -and $existing.Trim() -ne $url) {
+            Write-Host "  origin already points at $existing - leaving it alone." -ForegroundColor Yellow
             return $false
         }
     } else {
-        & git -C $path remote add origin $url
+        $null = & git -C $path remote add origin $url
     }
+    return $true
+}
+
+function Invoke-Push($path, $label) {
+    $null = & git -C $path branch -M main 2>&1
+    & git -C $path push -u origin main 2>&1 | ForEach-Object { "    $_" }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  push FAILED for $label (exit $LASTEXITCODE)" -ForegroundColor Red
+        return $false
+    }
+    Write-Host "  pushed" -ForegroundColor Green
     return $true
 }
 
@@ -74,22 +94,18 @@ if ($missing.Count -gt 0) {
 
 Write-Host "`nPushing noriki..." -ForegroundColor Cyan
 if (Add-Remote $here "noriki") {
-    & git -C $here branch -M main
-    & git -C $here push -u origin main
-    Write-Host "  pushed" -ForegroundColor Green
+    $null = Invoke-Push $here "noriki"
 }
 
 # ---- 3. push overseer --------------------------------------------------------
 
-Write-Host "`nPushing overseer..." -ForegroundColor Cyan
+Write-Host "`nPushing overseer (the unbacked-up one)..." -ForegroundColor Cyan
 if (Test-Path $overseer) {
     if (Add-Remote $overseer "overseer") {
-        & git -C $overseer branch -M main
-        & git -C $overseer push -u origin main
-        Write-Host "  pushed — this was the unbacked-up one" -ForegroundColor Green
+        $null = Invoke-Push $overseer "overseer"
     }
 } else {
-    Write-Host "  not found at $overseer — skipped" -ForegroundColor Yellow
+    Write-Host "  not found at $overseer - skipped" -ForegroundColor Yellow
 }
 
 # ---- 4. seed the private state repo -----------------------------------------
@@ -99,7 +115,11 @@ $stateDir = Join-Path $here ".state"
 
 if (-not (Test-Path (Join-Path $stateDir ".git"))) {
     if (Test-Path $stateDir) { Remove-Item $stateDir -Recurse -Force }
-    & git clone "https://github.com/$Owner/noriki-state.git" $stateDir 2>&1 | Out-Null
+    $null = & git clone "https://github.com/$Owner/noriki-state.git" $stateDir 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  clone FAILED (exit $LASTEXITCODE)" -ForegroundColor Red
+        exit 1
+    }
 }
 
 New-Item -ItemType Directory -Force -Path (Join-Path $stateDir "inbox")  | Out-Null
@@ -129,14 +149,12 @@ Never make this public — it holds your task history and every conversation.
 "@ | Set-Content -Path $readme -Encoding utf8
 }
 
-& git -C $stateDir add -A
-$dirty = & git -C $stateDir status --porcelain
-if ($dirty) {
-    & git -C $stateDir -c user.name="$Owner" -c user.email="bmccoy67@gmail.com" `
-        commit -q -m "Seed the Noriki state repo"
-    & git -C $stateDir branch -M main
-    & git -C $stateDir push -u origin main
-    Write-Host "  seeded and pushed" -ForegroundColor Green
+$null = & git -C $stateDir add -A
+$dirty = @(& git -C $stateDir status --porcelain)
+if ($dirty.Count -gt 0) {
+    $null = & git -C $stateDir -c user.name="$Owner" -c user.email="bmccoy67@gmail.com" `
+        commit -q -m "Seed the Noriki state repo" 2>&1
+    $null = Invoke-Push $stateDir "noriki-state"
 } else {
     Write-Host "  already seeded" -ForegroundColor Gray
 }
