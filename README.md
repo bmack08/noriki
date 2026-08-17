@@ -96,10 +96,19 @@ Both channels are optional and configured under `notify` in `relay/config.json`.
 
 **Push — [ntfy](https://ntfy.sh).** Free, no account. Pick a long unguessable
 topic name (anyone who knows it can read your notifications), put it in
-`ntfy_topic`, install the ntfy app and subscribe to the same topic.
+`ntfy_topic`, install the ntfy app and subscribe to the same topic. Works.
 
-**Email.** Set `email_to`. Leave `smtp.host` empty and ntfy forwards it for you —
-no SMTP setup at all. Fill in `smtp` only if you'd rather send it yourself.
+**Email — needs a real SMTP host.** `ntfy.sh` does **not** relay mail for
+anonymous publishers; every header variant (`Email`, `X-Email`, `E-Mail`, `Mail`)
+returns HTTP 400. There is no zero-setup fallback, so fill in `smtp`.
+
+For Gmail that means `smtp.gmail.com:587` and a **16-character App Password**
+(Google account → 2-Step Verification must be on → App passwords). Your normal
+password will be rejected. The password lives only in `relay/config.json`, which
+is gitignored.
+
+Both channels report honestly — `--test-notify` prints `DELIVERED` only when the
+send actually succeeded.
 
 Test both without waiting for a real question:
 

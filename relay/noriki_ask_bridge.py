@@ -132,9 +132,10 @@ class Notifier:
     def email_enabled(self) -> bool:
         return bool(self.email_to)
 
-    def push(self, title: str, message: str, tags: str = "question") -> None:
+    def push(self, title: str, message: str, tags: str = "question") -> bool:
+        """True only if it actually went. A notifier that lies is worse than none."""
         if not self.push_enabled:
-            return
+            return False
         headers = {
             "Title": title.encode("utf-8"),
             "Priority": "high",
@@ -150,34 +151,29 @@ class Notifier:
             )
             urllib.request.urlopen(req, timeout=HTTP_TIMEOUT).read()
             LOG.info("pushed: %s", title)
+            return True
         except Exception as exc:
             LOG.warning("push failed: %s", exc)
+            return False
 
-    def email(self, subject: str, body: str) -> None:
+    def email(self, subject: str, body: str) -> bool:
+        """True only if SMTP accepted it.
+
+        Note: ntfy.sh's public server does NOT relay email for anonymous
+        publishers — every header variant returns 400 — so there is no
+        zero-setup fallback. Email requires a real SMTP host.
+        """
         if not self.email_enabled:
-            return
+            return False
 
         host = (self.smtp.get("host") or "").strip()
-        if host:
-            self._email_smtp(host, subject, body)
-        elif self.push_enabled:
-            # ntfy can forward to email without any SMTP setup of our own
-            try:
-                req = urllib.request.Request(
-                    f"{self.server}/{self.topic}",
-                    data=body.encode("utf-8"),
-                    headers={"Title": subject.encode("utf-8"),
-                             "Email": self.email_to,
-                             "Priority": "default"},
-                )
-                urllib.request.urlopen(req, timeout=HTTP_TIMEOUT).read()
-                LOG.info("emailed via ntfy: %s", subject)
-            except Exception as exc:
-                LOG.warning("ntfy email failed: %s", exc)
-        else:
-            LOG.warning("email_to is set but there is no SMTP host and no ntfy topic")
+        if not host:
+            LOG.warning("email_to is set but smtp.host is empty — no email sent. "
+                        "ntfy.sh will not relay mail for anonymous senders.")
+            return False
+        return self._email_smtp(host, subject, body)
 
-    def _email_smtp(self, host: str, subject: str, body: str) -> None:
+    def _email_smtp(self, host: str, subject: str, body: str) -> bool:
         msg = EmailMessage()
         msg["Subject"] = subject
         msg["From"] = self.smtp.get("from") or self.smtp.get("user") or self.email_to
@@ -191,8 +187,14 @@ class Notifier:
                     s.login(self.smtp["user"], self.smtp.get("password", ""))
                 s.send_message(msg)
             LOG.info("emailed: %s", subject)
+            return True
+        except smtplib.SMTPAuthenticationError:
+            LOG.error("SMTP rejected the login. For Gmail this must be a 16-character "
+                      "App Password (2-Step Verification on), not your normal password.")
+            return False
         except Exception as exc:
             LOG.warning("smtp send failed: %s", exc)
+            return False
 
 
 # --------------------------------------------------------------------------
@@ -450,14 +452,32 @@ def main() -> None:
     cfg_path = Path(args.config)
     if not cfg_path.exists():
         raise SystemExit(f"No config at {cfg_path}. Copy config.example.json first.")
-    cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    # utf-8-sig, not utf-8: Notepad and PowerShell both write a BOM, and json
+    # rejects it outright. This file gets hand-edited, so tolerate both.
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"{cfg_path} is not valid JSON: {exc}") from exc
 
     if args.test_notify:
         n = Notifier(cfg.get("notify") or {})
-        n.push("Noriki test", "If you can read this on your phone, push works.")
-        n.email("Noriki test", "If you can read this, email works.")
-        print(f"push={'sent' if n.push_enabled else 'DISABLED (no ntfy_topic)'}  "
-              f"email={'sent' if n.email_enabled else 'DISABLED (no email_to)'}")
+
+        if not n.push_enabled:
+            print("PUSH   not configured (no ntfy_topic)")
+        else:
+            ok = n.push("Noriki test", "If you can read this on your phone, push works.")
+            print(f"PUSH   {'DELIVERED' if ok else 'FAILED — see the warning above'}")
+
+        if not n.email_enabled:
+            print("EMAIL  not configured (no email_to)")
+        elif not (n.smtp.get("host") or "").strip():
+            print("EMAIL  not configured — email_to is set but smtp.host is empty.")
+            print("       ntfy.sh will not relay mail for anonymous senders, so a real")
+            print("       SMTP host is required. For Gmail: smtp.gmail.com:587 with a")
+            print("       16-character App Password.")
+        else:
+            ok = n.email("Noriki test", "If you can read this, email works.")
+            print(f"EMAIL  {'DELIVERED' if ok else 'FAILED — see the warning above'}")
         return
 
     bridge = Bridge(cfg)

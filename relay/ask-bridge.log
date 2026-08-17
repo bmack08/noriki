@@ -1,0 +1,4 @@
+14:26:23  INFO    pushed: Noriki test
+14:26:23  WARNING ntfy email failed: HTTP Error 400: Bad Request
+14:27:47  INFO    pushed: Noriki test
+14:27:48  ERROR   SMTP rejected the login. For Gmail this must be a 16-character App Password (2-Step Verification on), not your normal password.

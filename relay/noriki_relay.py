@@ -30,6 +30,7 @@ import argparse
 import json
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -246,7 +247,8 @@ class Relay:
         (self.repo / "relay-status.json").write_text(json.dumps({
             "alive": True,
             "at": utcnow(),
-            "host": os.environ.get("COMPUTERNAME") or os.uname().nodename,
+            # platform.node(), not os.uname(): the latter doesn't exist on Windows
+            "host": platform.node() or "unknown",
             "projects": sorted(self.allowed),
             "permissionMode": self.mode,
         }, indent=2), encoding="utf-8")
@@ -316,7 +318,13 @@ def main() -> None:
     if not cfg_path.exists():
         raise SystemExit(f"No config at {cfg_path}. Copy config.example.json and edit it.")
 
-    relay = Relay(json.loads(cfg_path.read_text(encoding="utf-8")))
+    # utf-8-sig: Notepad and PowerShell both write a BOM and json rejects it
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"{cfg_path} is not valid JSON: {exc}") from exc
+
+    relay = Relay(cfg)
     if args.once:
         relay.tick()
     else:
