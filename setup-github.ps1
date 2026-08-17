@@ -1,4 +1,4 @@
-<#
+﻿<#
     Finishes the GitHub side of Noriki in one run.
 
     You create three empty repos first (30 seconds each, in the browser —

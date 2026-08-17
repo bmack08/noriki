@@ -1,4 +1,4 @@
-<#
+﻿<#
     Start the Noriki relay and keep it up.
 
         .\run-relay.ps1
